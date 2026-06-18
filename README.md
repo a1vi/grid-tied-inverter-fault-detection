@@ -81,39 +81,83 @@ Total params: 575,046
 
 ---
 
-## How to Run
+## Interactive Edge Diagnostics & Self-Healing Web Application
 
-### Generate Dataset
-```bash
-python3 dataset/generate_3phase_dataset.py
-```
+An interactive, premium-quality web application is built and deployed directly to **GitHub Pages**. This application implements a full-system simulation of the three-phase inverter, dynamic feature extraction, heuristic classifier inference, and closed-loop self-healing responses.
 
-### Train All Models (Kaggle GPU recommended)
-```bash
-# Update dataset path in models/proposed_only.py
-python3 models/proposed_only.py
-```
+🚀 **Live Interactive Web App**: [Three-Phase Inverter ML Dashboard & Simulator](https://a1vi.github.io/grid-tied-inverter-fault-detection/)
 
-### Compile Paper
-Upload `paper/` to [Overleaf](https://overleaf.com), set compiler to `pdflatex`, compile `main.tex`.
+### Key Features of the Deployed System:
+1. **Interactive Physics-based Simulator**: 
+   - Dynamically injects all 5 fault classes (Open-Circuit, DC current bias, Voltage sags/swells, Islanding grid decay, PLL phase angle drifts).
+   - Real-time parameter controls for load current amplitudes, fault phase targets, DC biases, grid scales, and measurement noise ($\sigma$).
+2. **Double-Canvas Oscilloscope**: 
+   - A high-performance 60fps scrolling scope displaying the three-phase inverter currents ($i_{a,b,c}$), nominal reference current ($i_{ref}$), and instantaneous tracking errors ($err_{a,b,c}$).
+3. **Edge Feature Extraction Engine (`to_rich`)**: 
+   - Aggregates rolling 50-sample windows (10ms grid windows) and extracts statistical features (Mean, Std Dev, RMS, and Skewness) on client edge JS, matching the exact Python data pipeline.
+4. **Automated Closed-Loop Self-Healing State Machine**: 
+   - *Open-Circuit Switch Fault Remediation*: Isolates the fault and switches to redundant phase leg to restore symmetric sinusoidal currents.
+   - *DC Current Bias Compensation*: Dynamically injects offset cancellation parameters into the inverter control loop.
+   - *Sag/Swell Voltage Support*: Automatically switches to capacitive STATCOM control, injecting/absorbing reactive power ($Q$) to support grid voltage.
+   - *PLL Desync Resynchronization*: Resets PLL loop filter parameters to lock the phase angle back to grid voltage.
+   - *Islanding Disconnect*: Detects islanding within IEEE 1547 standard safety bounds and triggers safe inverter shutdown to avoid grid hazard.
+5. **Research Figure & Data Explorer**: 
+   - A built-in tabbed explorer permitting direct review of training curves, F1-scores, accuracy benchmarks, and wave comparisons from the academic paper.
 
 ---
 
-## Dependencies
+## Interactive App Visualizations
 
-```bash
-pip install tensorflow xgboost scikit-learn numpy pandas matplotlib seaborn
-```
+### 1. Healthy State (Normal Closed-Loop Tracking)
+Balanced three-phase currents tracking reference signals with low THD (< 2.0%) and nominal frequency (50.00 Hz):
+![Dashboard Healthy State](paper/figures/dashboard_healthy.png)
+
+### 2. Unmitigated Fault State (Open-Circuit Switch Injected)
+An open-circuit switch fault injected on Phase A, leading to half-cycle current clipping, high THD (~15.6%), and high tracking error:
+![Dashboard Fault State](paper/figures/dashboard_fault.png)
+
+### 3. Active Mitigation State (Self-Healing Active)
+Self-healing enabled, triggering active switch reconfiguration. Balanced sinusoidal currents are restored on the fly:
+![Dashboard Remediated State](paper/figures/dashboard_remediated.png)
 
 ---
 
-## Reference Papers
+## Academic Paper Figures
 
-1. Baker et al. (COMPEL 2021) — DOI: 10.1109/COMPEL52922.2021.9646062
-2. Prabakaran et al. (ICSFT 2026) — DOI: 10.1109/ICSFT66733.2026.11506689
+### Fig. 1 — Model Accuracy Benchmarking
+Comparison of standard ML baselines against the proposed Residual MLP (ResMLP):
+![Fig. 1 — Model Accuracy](paper/figures/fig1.png)
+
+### Fig. 2 — Confusion Matrix: Proposed ResMLP
+Classifier validation matrix showing perfect classification separation and recall (1.00) on safety-critical classes (Open-Circuit and Islanding):
+![Fig. 2 — Confusion Matrix](paper/figures/fig2.png)
+
+### Fig. 3 — Per-Class F1-Scores Across Models
+Detailed performance metrics showing the ResMLP outperforming traditional deep MLPs:
+![Fig. 3 — Per-Class F1-Scores](paper/figures/fig3.png)
+
+### Fig. 4 — ResMLP Training Curves
+Training and validation loss/accuracy curves showcasing skip-connection convergence stability:
+![Fig. 4 — ResMLP Training Curves](paper/figures/fig4.png)
+
+### Fig. 5 — Symmetrical Current Waveforms
+Healthy grid currents versus a severe Open-Circuit fault resulting in half-cycle wave loss:
+![Fig. 5 — Waveforms Comparison](paper/figures/fig5.png)
+
+### Fig. 6 — Total Harmonic Distortion (THD) profile
+Comparative harmonic signature metrics per fault class, illustrating distinct THD footprints:
+![Fig. 6 — THD Profiles](paper/figures/fig6.png)
+
+---
+
+## References
+
+1. **Baker et al. (COMPEL 2021)** — *Machine Learning-Based Open-Switch Fault Diagnostic Techniques in Grid-Tied Inverters.* [DOI: 10.1109/COMPEL52922.2021.9646062](https://doi.org/10.1109/COMPEL52922.2021.9646062)
+2. **Prabakaran et al. (ICSFT 2026)** — *Unified ML Diagnostics and Anti-Islanding Protection Frameworks for Smart Inverters.* [DOI: 10.1109/ICSFT66733.2026.11506689](https://doi.org/10.1109/ICSFT66733.2026.11506689)
 
 ---
 
 ## License
 
-MIT License
+This repository is licensed under the [MIT License](LICENSE).
+
