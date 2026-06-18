@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Phase Inverter Fault Detection & Self-Healing Dashboard</title>
+    <meta name="description" content="An interactive ML-driven simulation platform demonstrating fault detection, classification, and self-healing control for three-phase grid-tied solar/wind inverters.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <div class="glow-container"></div>
+    <div class="dashboard-wrapper">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="pulse-ring green-ring" id="sys-pulse-ring"></span>
+                <h1>Three-Phase Grid-Tied Inverter ML Framework</h1>
+            </div>
+            <div class="sys-meta">
+                <span class="badge" id="sys-status-badge">SYSTEM HEALTHY</span>
+                <span class="meta-time" id="sys-clock">00:00:00 UTC</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-grid">
+            
+            <!-- Column 1: Simulator Controls & Self-Healing -->
+            <section class="dashboard-col col-controls" aria-labelledby="controls-heading">
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <span class="icon">⚡</span>
+                        <h2 id="controls-heading">Inverter Simulation Controls</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Fault Injection Configuration -->
+                        <div class="control-group">
+                            <label for="fault-selector">Inject Fault / Operating Mode</label>
+                            <select id="fault-selector" class="form-input">
+                                <option value="0">Healthy Operation (Class 0)</option>
+                                <option value="1">Open-Circuit Switch Fault (Class 1)</option>
+                                <option value="2">DC Current Injection Fault (Class 2)</option>
+                                <option value="3">Grid Voltage Sag/Swell (Class 3)</option>
+                                <option value="4">Islanding Disturbance (Class 4)</option>
+                                <option value="5">PLL Desynchronization (Class 5)</option>
+                            </select>
+                        </div>
+
+                        <!-- Parameter Tuning Sliders -->
+                        <div class="control-group">
+                            <div class="slider-header">
+                                <label for="slider-current">Load Current Amplitude</label>
+                                <span class="slider-value" id="val-current">15.0 A</span>
+                            </div>
+                            <input type="range" id="slider-current" min="5.0" max="18.0" step="0.5" value="15.0" class="slider">
+                        </div>
+
+                        <div class="control-group" id="group-phase-select" style="display:none;">
+                            <label for="select-fault-phase">Faulty Phase Target</label>
+                            <select id="select-fault-phase" class="form-input">
+                                <option value="0">Phase A</option>
+                                <option value="1">Phase B</option>
+                                <option value="2">Phase C</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group" id="group-dc-offset" style="display:none;">
+                            <div class="slider-header">
+                                <label for="slider-dc-offset">DC Bias Voltage</label>
+                                <span class="slider-value" id="val-dc-offset">3.0 A</span>
+                            </div>
+                            <input type="range" id="slider-dc-offset" min="1.0" max="4.0" step="0.2" value="3.0" class="slider">
+                        </div>
+
+                        <div class="control-group" id="group-grid-scale" style="display:none;">
+                            <div class="slider-header">
+                                <label for="slider-grid-scale">Grid Voltage Scale</label>
+                                <span class="slider-value" id="val-grid-scale">0.70x</span>
+                            </div>
+                            <input type="range" id="slider-grid-scale" min="0.50" max="1.30" step="0.05" value="0.70" class="slider">
+                        </div>
+
+                        <div class="control-group">
+                            <div class="slider-header">
+                                <label for="slider-noise">Measurement Noise (σ)</label>
+                                <span class="slider-value" id="val-noise">0.20</span>
+                            </div>
+                            <input type="range" id="slider-noise" min="0.01" max="0.50" step="0.01" value="0.20" class="slider">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Self-Healing Module Card -->
+                <div class="card glass-card healing-card">
+                    <div class="card-header">
+                        <span class="icon">🛡️</span>
+                        <h2>Self-Healing Control</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="healing-toggle-container">
+                            <div class="healing-text">
+                                <h3>Closed-Loop Remediation</h3>
+                                <p>Enable automated ML-driven self-healing response.</p>
+                            </div>
+                            <label class="switch" for="btn-healing">
+                                <input type="checkbox" id="btn-healing">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="healing-status-box" id="healing-status-box">
+                            <div class="status-indicator">
+                                <span class="status-dot grey-dot" id="healing-dot"></span>
+                                <span id="healing-status-text">Ready — Enable monitoring</span>
+                            </div>
+                            <div class="action-details" id="healing-action-details">
+                                No active grid threat detected.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Column 2: Waveform Oscilloscope & Dynamic Gauges -->
+            <section class="dashboard-col col-charts" aria-labelledby="charts-heading">
+                <div class="card glass-card scope-card">
+                    <div class="card-header">
+                        <span class="icon">📊</span>
+                        <h2 id="charts-heading">Real-Time Waveform Oscilloscope</h2>
+                        <div class="scope-legend">
+                            <span class="legend-item text-phase-a">Phase A</span>
+                            <span class="legend-item text-phase-b">Phase B</span>
+                            <span class="legend-item text-phase-c">Phase C</span>
+                            <span class="legend-item text-ref">Reference</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Canvas Oscilloscope -->
+                        <div class="canvas-container">
+                            <canvas id="scope-canvas"></canvas>
+                        </div>
+                        
+                        <!-- Mini Error Tracking Scope -->
+                        <div class="canvas-container-mini">
+                            <div class="mini-label">Current Tracking Error (i_ref - i_L)</div>
+                            <canvas id="error-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Gauges Panel -->
+                <div class="gauges-grid">
+                    <div class="gauge-card glass-card">
+                        <div class="gauge-label">Grid Frequency</div>
+                        <div class="gauge-value" id="gauge-freq">50.00 Hz</div>
+                        <div class="gauge-meta" id="gauge-freq-drift">Nominal</div>
+                    </div>
+                    <div class="gauge-card glass-card">
+                        <div class="gauge-label">Total Harmonic Distortion</div>
+                        <div class="gauge-value" id="gauge-thd">1.8%</div>
+                        <div class="gauge-meta" id="gauge-thd-status">IEEE 519 Compliant</div>
+                    </div>
+                    <div class="gauge-card glass-card">
+                        <div class="gauge-label">Active Power (P)</div>
+                        <div class="gauge-value" id="gauge-power-p">3.18 kW</div>
+                        <div class="gauge-meta">Balanced Output</div>
+                    </div>
+                    <div class="gauge-card glass-card">
+                        <div class="gauge-label">Reactive Power (Q)</div>
+                        <div class="gauge-value" id="gauge-power-q">0.05 kVAR</div>
+                        <div class="gauge-meta" id="gauge-power-factor">Power Factor: 1.00</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Column 3: AI Inference & Diagnostics -->
+            <section class="dashboard-col col-diagnostics" aria-labelledby="diag-heading">
+                <div class="card glass-card diagnostic-card">
+                    <div class="card-header">
+                        <span class="icon">🧠</span>
+                        <h2 id="diag-heading">ML Classifier Diagnostics</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Classification Output -->
+                        <div class="inference-output-box" id="inference-box">
+                            <div class="prediction-main">
+                                <span class="label">PREDICTED STATE:</span>
+                                <span class="value text-healthy" id="predicted-class-name">HEALTHY</span>
+                            </div>
+                            <div class="prediction-confidence">
+                                <div class="conf-bar-container">
+                                    <div class="conf-bar bg-healthy" id="predicted-confidence-bar" style="width: 99.8%"></div>
+                                </div>
+                                <span class="conf-val" id="predicted-confidence-val">99.8% Confidence</span>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Feature Vector Extraction View -->
+                        <div class="feature-vector-container">
+                            <h3>Extracted Window Features (to_rich)</h3>
+                            <div class="feature-scroll-area">
+                                <table class="feature-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Feature Category</th>
+                                            <th>Mean</th>
+                                            <th>Std Dev</th>
+                                            <th>RMS</th>
+                                            <th>Skew</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feature-table-body">
+                                        <!-- Javascript Populates Row Stats dynamically -->
+                                        <tr>
+                                            <td>Grid Voltages (e_abc)</td>
+                                            <td id="f-mean-e">-0.12</td>
+                                            <td id="f-std-e">220.1</td>
+                                            <td id="f-rms-e">219.8</td>
+                                            <td id="f-skew-e">0.01</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Inverter Currents (i_abc)</td>
+                                            <td id="f-mean-i">-0.01</td>
+                                            <td id="f-std-i">10.6</td>
+                                            <td id="f-rms-i">10.6</td>
+                                            <td id="f-skew-i">-0.02</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Tracking Error (err_abc)</td>
+                                            <td id="f-mean-err">0.00</td>
+                                            <td id="f-std-err">0.15</td>
+                                            <td id="f-rms-err">0.15</td>
+                                            <td id="f-skew-err">0.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td>DC Link Voltage (Vdc)</td>
+                                            <td colspan="4" class="text-center" id="f-vdc-val">700.2 V</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Benchmarks Summary -->
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <span class="icon">📖</span>
+                        <h2>Research Benchmarks</h2>
+                    </div>
+                    <div class="card-body">
+                        <table class="benchmark-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Accuracy (%)</th>
+                                    <th>F1-Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Random Forest</td>
+                                    <td>99.44%</td>
+                                    <td>0.9945</td>
+                                </tr>
+                                <tr>
+                                    <td>XGBoost</td>
+                                    <td>98.89%</td>
+                                    <td>0.9890</td>
+                                </tr>
+                                <tr>
+                                    <td>Shallow MLP</td>
+                                    <td>99.72%</td>
+                                    <td>0.9972</td>
+                                </tr>
+                                <tr>
+                                    <td>Gradient Boosting</td>
+                                    <td>99.44%</td>
+                                    <td>0.9945</td>
+                                </tr>
+                                <tr class="proposed-row">
+                                    <td>Proposed ResMLP ✦</td>
+                                    <td>98.06%</td>
+                                    <td>0.8629</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="note-box">
+                            ✦ ResMLP achieves a perfect **Recall (1.00)** on Open-Circuit Switch Faults and Islanding.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Section 2: Research Paper Visualizations Explorer -->
+        <section class="research-visualizer-section" aria-labelledby="paper-explorer-heading">
+            <div class="card glass-card width-full">
+                <div class="card-header">
+                    <span class="icon">🔬</span>
+                    <h2 id="paper-explorer-heading">Research Paper Figures & Data Explorer</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Figure Viewer Tabs -->
+                    <div class="figure-tabs-container">
+                        <nav class="figure-tab-buttons" aria-label="Paper Figures">
+                            <button class="tab-btn active" data-figure="fig1" id="btn-fig1">Accuracy Comparison</button>
+                            <button class="tab-btn" data-figure="fig2" id="btn-fig2">Confusion Matrix</button>
+                            <button class="tab-btn" data-figure="fig3" id="btn-fig3">Per-Class F1</button>
+                            <button class="tab-btn" data-figure="fig4" id="btn-fig4">Training Curves</button>
+                            <button class="tab-btn" data-figure="fig5" id="btn-fig5">Waveform Comparison</button>
+                            <button class="tab-btn" data-figure="fig6" id="btn-fig6">THD Comparison</button>
+                        </nav>
+                        
+                        <!-- Interactive Display Panel -->
+                        <div class="figure-display-panel">
+                            <div class="figure-img-wrapper" id="active-figure-container">
+                                <img src="paper/figures/fig1.png" alt="Fig. 1 - Model Accuracy Comparison" id="active-figure-img">
+                            </div>
+                            <div class="figure-caption" id="active-figure-caption">
+                                <strong>Fig. 1 — Model Accuracy Comparison:</strong> Benchmarking Random Forest, XGBoost, Shallow MLP, Deep MLP, Gradient Boosting, and the Proposed Residual MLP framework.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>© 2026 Md. Atair Rahman Alvi. BRAC University, Dhaka, Bangladesh. Research licensed under MIT License.</p>
+            <p class="git-link">Deployed to GitHub Pages via automated workflows</p>
+        </footer>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
